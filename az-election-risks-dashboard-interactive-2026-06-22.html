@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arizona Election Risks Dashboard — June 22, 2026</title>
+<style>
+  :root {
+    --lnp-navy: #1E3A65;
+    --lnp-gold: #FFB638;
+    --lnp-near-black: #212121;
+    --lnp-off-white: #F5F5F5;
+    --lnp-white: #FFFFFF;
+    --lnp-muted-gray: #595A55;
+    --lnp-cream: #FDEFD2;
+    --crit-red: #B3261E;
+    --elev-amber: #B7791F;
+    --emrg-slate: #4A5568;
+    --line: #E5E5E5;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 0; font-family: 'Neue Haas Grotesk', 'Söhne', 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.55; color: var(--lnp-near-black); background: var(--lnp-off-white); }
+  .container { max-width: 1200px; margin: 0 auto; background: var(--lnp-white); }
+
+  /* HEADER */
+  .header { background: var(--lnp-navy); color: var(--lnp-white); padding: 48px 56px 36px; }
+  .header h1 { margin: 0 0 8px; font-size: 30px; font-weight: 800; letter-spacing: 0.02em; text-transform: uppercase; line-height: 1.15; }
+  .header .subtitle { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.85; margin: 0; }
+  .header .gold-rule { width: 64px; height: 3px; background: var(--lnp-gold); margin-top: 18px; }
+
+  /* INSIGHT STRIP — chart + at-a-glance side by side */
+  .insight-strip { background: var(--lnp-off-white); padding: 32px 56px; display: grid; grid-template-columns: 280px 1fr; gap: 40px; border-bottom: 1px solid var(--line); align-items: start; }
+  .chart-card { background: var(--lnp-white); padding: 20px; border-top: 3px solid var(--lnp-gold); }
+  .chart-card h3 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--lnp-navy); margin: 0 0 4px; }
+  .chart-card .sub { font-size: 11px; color: var(--lnp-muted-gray); margin: 0 0 12px; }
+  .chart-card .donut { max-width: 180px; margin: 0 auto; }
+  .chart-card .donut svg { width: 100%; height: auto; display: block; }
+  .chart-legend { margin-top: 12px; font-size: 12px; color: var(--lnp-muted-gray); }
+  .chart-legend .row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dotted var(--line); }
+  .chart-legend .swatch { display: inline-block; width: 10px; height: 10px; margin-right: 8px; vertical-align: middle; }
+
+  .eyebrow { font-size: 11px; font-style: italic; color: var(--lnp-muted-gray); letter-spacing: 0.05em; margin: 0 0 6px; }
+  .at-a-glance h2 { font-size: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; margin: 0 0 6px; color: var(--lnp-navy); }
+  .at-a-glance > .gold-rule { width: 40px; height: 2px; background: var(--lnp-gold); margin-bottom: 20px; }
+  .at-a-glance .columns { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+  .at-a-glance .col h3 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--lnp-navy); margin: 0 0 6px; }
+  .at-a-glance .col .gold-rule { width: 28px; height: 2px; background: var(--lnp-gold); margin-bottom: 12px; }
+  .at-a-glance ul { margin: 0; padding-left: 18px; }
+  .at-a-glance li { margin-bottom: 10px; font-size: 14px; line-height: 1.5; }
+  .at-a-glance .sev-tag { font-weight: 700; font-size: 10px; letter-spacing: 0.06em; color: var(--lnp-muted-gray); }
+
+  /* FILTER BAR (sticky) */
+  .filter-bar { background: var(--lnp-white); border-bottom: 1px solid var(--line); padding: 16px 56px; display: flex; flex-wrap: wrap; gap: 18px; align-items: center; position: sticky; top: 0; z-index: 50; box-shadow: 0 1px 0 var(--line); }
+  .filter-bar .group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .filter-bar .label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--lnp-muted-gray); }
+  .filter-bar button { font-family: inherit; font-size: 12px; font-weight: 600; padding: 6px 12px; background: var(--lnp-off-white); border: 1px solid var(--line); color: var(--lnp-near-black); cursor: pointer; text-transform: uppercase; letter-spacing: 0.04em; transition: all 0.15s; }
+  .filter-bar button:hover { background: var(--lnp-cream); }
+  .filter-bar button.active { background: var(--lnp-navy); color: var(--lnp-white); border-color: var(--lnp-navy); }
+  .filter-bar select { font-family: inherit; font-size: 12px; padding: 6px 24px 6px 10px; background: var(--lnp-off-white); border: 1px solid var(--line); cursor: pointer; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M0 0l5 6 5-6z' fill='%23595A55'/></svg>"); background-repeat: no-repeat; background-position: right 8px center; }
+  .filter-bar .results-count { margin-left: auto; font-size: 12px; color: var(--lnp-muted-gray); }
+  .filter-bar .reset { background: transparent; border: none; color: var(--lnp-navy); text-decoration: underline; padding: 0; }
+
+  /* ITEMS GRID */
+  .items-region { padding: 32px 56px; }
+  .items-region h2 { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--lnp-navy); margin: 0 0 6px; }
+  .items-region .gold-rule { width: 32px; height: 2px; background: var(--lnp-gold); margin-bottom: 20px; }
+  .item { background: var(--lnp-white); border: 1px solid var(--line); border-left: 4px solid var(--lnp-navy); padding: 18px 22px; margin-bottom: 14px; position: relative; transition: opacity 0.2s; }
+  .item.hidden { display: none; }
+  .item.critical { border-left-color: var(--crit-red); }
+  .item.elevated { border-left-color: var(--elev-amber); }
+  .item.emerging { border-left-color: var(--emrg-slate); }
+  .item .badge-row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  .item .badge { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; color: var(--lnp-white); }
+  .item.critical .badge.sev { background: var(--crit-red); }
+  .item.elevated .badge.sev { background: var(--elev-amber); }
+  .item.emerging .badge.sev { background: var(--emrg-slate); }
+  .item .badge.pillar { background: var(--lnp-navy); }
+  .item .badge.new { background: var(--lnp-gold); color: var(--lnp-near-black); }
+  .item h3 { font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.01em; margin: 0 0 6px; color: var(--lnp-near-black); line-height: 1.3; }
+  .item .meta { font-size: 11px; color: var(--lnp-muted-gray); margin: 0 0 10px; letter-spacing: 0.03em; }
+  .item p { margin: 6px 0; font-size: 14px; line-height: 1.55; }
+  .item .label { font-weight: 700; color: var(--lnp-navy); text-transform: uppercase; font-size: 10px; letter-spacing: 0.06em; display: inline-block; margin-right: 6px; }
+  .item .sources { margin-top: 10px; font-size: 12px; color: var(--lnp-muted-gray); }
+  .item .sources a { color: var(--lnp-navy); text-decoration: underline; }
+  .empty-state { padding: 40px 0; text-align: center; color: var(--lnp-muted-gray); font-style: italic; display: none; }
+  .empty-state.show { display: block; }
+
+  /* BRIGHT SPOTS */
+  .bright-spots { background: var(--lnp-cream); padding: 36px 56px; border-top: 3px solid var(--lnp-gold); }
+  .bright-spots h2 { font-size: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; margin: 0 0 6px; color: var(--lnp-navy); }
+  .bright-spots .gold-rule { width: 40px; height: 2px; background: var(--lnp-navy); margin-bottom: 18px; }
+  .bright-spots ul { margin: 0; padding-left: 20px; }
+  .bright-spots li { margin-bottom: 10px; font-size: 14px; }
+  .bright-spots a { color: var(--lnp-navy); text-decoration: underline; }
+
+  /* FOOTER */
+  .footer { background: var(--lnp-navy); color: var(--lnp-white); padding: 28px 56px; font-size: 12px; line-height: 1.6; }
+  .footer .meta-line { opacity: 0.85; margin: 0 0 6px; }
+  .footer .method-note { font-style: italic; opacity: 0.7; margin: 12px 0 0; font-size: 11px; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 12px; }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .insight-strip { grid-template-columns: 1fr; }
+    .at-a-glance .columns { grid-template-columns: 1fr; gap: 20px; }
+  }
+  @media (max-width: 700px) {
+    .header, .insight-strip, .filter-bar, .items-region, .bright-spots, .footer { padding-left: 20px; padding-right: 20px; }
+    .header h1 { font-size: 22px; }
+    .filter-bar { position: static; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header class="header">
+    <h1>Arizona Election Risks Dashboard</h1>
+    <p class="subtitle">June 22, 2026 Edition · Leadership Now Arizona · 29 days to the July 21 primary · voter-registration deadline today · early voting begins June 24</p>
+    <div class="gold-rule"></div>
+  </header>
+
+  <!-- INSIGHT STRIP: chart + at-a-glance -->
+  <section class="insight-strip">
+    <div class="chart-card">
+      <h3>This week, by severity</h3>
+      <p class="sub">All tracked items across five pillars.</p>
+      <div class="donut" id="severityDonut" role="img" aria-label="Donut chart of tracked items by severity"></div>
+      <div class="chart-legend" id="severityLegend">
+        <div class="row"><span><span class="swatch" style="background:#B3261E"></span>Critical</span><span><strong>5</strong></span></div>
+        <div class="row"><span><span class="swatch" style="background:#B7791F"></span>Elevated</span><span><strong>7</strong></span></div>
+        <div class="row"><span><span class="swatch" style="background:#4A5568"></span>Emerging</span><span><strong>8</strong></span></div>
+        <div class="row" style="border-bottom:none; font-weight:600; color:var(--lnp-navy);"><span>Total tracked</span><span><strong>20</strong></span></div>
+      </div>
+    </div>
+
+    <div class="at-a-glance">
+      <p class="eyebrow">Executive summary</p>
+      <h2>At a glance</h2>
+      <div class="gold-rule"></div>
+      <div class="columns">
+        <div class="col">
+          <h3>Three newest risks</h3>
+          <div class="gold-rule"></div>
+          <ul>
+            <li>The U.S. Supreme Court took <strong>no action</strong> on the consolidated Arizona proof-of-citizenship petitions (<em>RNC v. Mi Familia Vota</em>) at its June 22 order list — neither granting nor denying review, so the case is relisted/held and there will be no cert decision before the July 21 primary. <span class="sev-tag">(CRITICAL)</span></li>
+            <li>The Maricopa Recorder–Board dispute reached its court-ordered June 22 mediation date under the appellate stay; Supervisor Galvin spent the weekend publicly detailing the March 12 scanner / "ballot cage" breach allegations against Heap's office as early voting begins June 24. <span class="sev-tag">(CRITICAL)</span></li>
+            <li>FHFA Director Bill Pulte formally became Acting DNI on June 19 and began an ODNI / counterterrorism-center workforce purge; the Clayton confirmation hearing stays canceled and FISA §702 stays lapsed. <span class="sev-tag">(EMERGING)</span></li>
+          </ul>
+        </div>
+        <div class="col">
+          <h3>Three most severe risks</h3>
+          <div class="gold-rule"></div>
+          <ul>
+            <li><em>RNC v. Mi Familia Vota</em>: the Supreme Court took no action on June 22, leaving the Arizona proof-of-citizenship petitions relisted/held — no decision before the primary, with the 2024 partial stay on A.R.S. § 16-121.01(C) still in effect and ~50,000 federal-only voters in the balance. <span class="sev-tag">(CRITICAL)</span></li>
+            <li>The Maricopa Recorder–Board fight remains in appellate limbo as early voting begins June 24: the June 18 <em>Purcell</em> stay leaves the Board in control of IT staff, drop boxes, and vote centers, with Heap's promised Arizona Supreme Court appeal and the June 22 mediation outcome both unconfirmed. <span class="sev-tag">(CRITICAL)</span></li>
+            <li>Mail-ballot EO implementation races toward a June 30 federal citizenship-list go-live — now eight days out and six days into Arizona early voting — before the voter-facing correction portal is ready. <span class="sev-tag">(CRITICAL)</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STICKY FILTER BAR -->
+  <div class="filter-bar" role="region" aria-label="Filter and sort controls">
+    <div class="group" role="group" aria-label="Filter by pillar">
+      <span class="label">Pillar:</span>
+      <button data-filter-pillar="all" class="active">All</button>
+      <button data-filter-pillar="legislative">Legislative</button>
+      <button data-filter-pillar="trump-admin">Trump admin</button>
+      <button data-filter-pillar="admin">Election admin</button>
+      <button data-filter-pillar="judicial">Judicial</button>
+      <button data-filter-pillar="disinfo">Disinfo</button>
+    </div>
+    <div class="group" role="group" aria-label="Filter by severity">
+      <span class="label">Severity:</span>
+      <button data-filter-sev="all" class="active">All</button>
+      <button data-filter-sev="critical">Critical</button>
+      <button data-filter-sev="elevated">Elevated+</button>
+    </div>
+    <div class="group">
+      <span class="label">Sort:</span>
+      <select id="sortSelect" aria-label="Sort items">
+        <option value="severity">Severity (highest first)</option>
+        <option value="date">Date (newest first)</option>
+        <option value="pillar">Pillar</option>
+      </select>
+    </div>
+    <span class="results-count" id="resultsCount">Showing all 20 items</span>
+    <button class="reset" id="resetBtn">Reset</button>
+  </div>
+
+  <!-- ITEMS REGION -->
+  <section class="items-region" id="itemsRegion">
+    <h2>All tracked items</h2>
+    <div class="gold-rule"></div>
+    <div id="itemsList">
+
+      <article class="item critical" data-pillar="admin" data-severity="critical" data-date="2026-06-22" data-sev-rank="3">
+        <div class="badge-row"><span class="badge sev">Critical</span><span class="badge pillar">Election Admin</span><span class="badge new">New this week</span></div>
+        <h3>Maricopa Recorder–Board Conflict Reaches Court-Ordered Mediation Under Appellate Stay as Early Voting Nears</h3>
+        <p class="meta">Maricopa Co. Superior Court / AZ Court of Appeals · Appellate stay granted June 18 · Court-ordered mediation set June 22 · May 29 – June 22, 2026 (updated)</p>
+        <p>The Heap–Supervisors power struggle has crossed from litigation into criminal process — and the evidence is now public. On June 11, the county released surveillance video and an HR internal-investigation report substantiating the allegations: Recorder's Office CIO Bryan Colby and another staffer removed a board-controlled "pre-tabulation" scanner and provisional-ballot affidavit envelopes from a locked area of the tabulation center on March 12, with chat logs indicating Colby knew the scanner belonged to the Elections Department; the Board spent roughly $70,000 replacing the "compromised" equipment. Special prosecutor Kent Volkmer says his investigation is "wrapping up." Heap filed an emergency motion claiming the scanner belongs to his office and asking the court to bar prosecution of his staff, while renewing his May 29 motion to hold the Board in civil contempt with $100,000/day sanctions. County Attorney Rachel Mitchell (R) separately asked Judge Blaney on June 8 to rein in Stephen Miller's America First Legal, calling its role as Heap's de facto in-house counsel an "unprecedented power grab" over Maricopa elections.</p>
+        <p><span class="label">What it means</span>Five-plus weeks before the July 21 primary, control of election administration in the nation's second-largest voting jurisdiction is contested across a civil appeal, a contempt motion, and a criminal investigation simultaneously — with a White House-aligned legal group accused by a Republican county attorney of directing the Recorder's office. Votebeat reports the feud "could sow chaos" in the primary.</p>
+        <p><span class="label">Update (June 16)</span>The fight moved into court. At a June 15 hearing on Heap's motion to hold the Board in civil contempt and fine it $100,000/day (for allegedly defying the April 17 ruling that it illegally withheld IT staff), Judge Scott Blaney declined to rule and instead ordered both sides into mediation with assigned Judge Christopher Coury on <strong>June 22 — two days before early ballots mail June 24</strong> — and set a four-hour evidentiary contempt hearing for <strong>June 30</strong> (joint pretrial statement due June 25). After Heap's AFL attorney proposed Trump 2020 ally Cleta Mitchell as mediator and the Board's counsel called her "overtly biased," the parties moved to a retired judge. County Attorney Rachel Mitchell's separate motion to rein in America First Legal was also argued June 15, with a further evidentiary hearing set later in June; no ruling yet. Special prosecutor Kent Volkmer's scanner-removal probe remains "wrapping up" with no charging decision as of June 17.</p>
+        <p><span class="label">Update (June 18)</span>The Arizona Court of Appeals upended the case. A 2–1 panel (Judges Andrew Jacobs and James Morse in the majority; Judge Brian Furuya dissenting) granted the Board's emergency motion to <strong>stay Judge Blaney's April 16 injunction</strong> that had ordered election functions and IT staff returned to Heap, invoking the U.S. Supreme Court's <em>Purcell</em> principle — finding the Board "very likely to succeed" and that changes this close to the July 21 primary (early voting starts June 24) risk voter confusion. Board officials called it a win for voters; Heap said it "is not the final word" and will appeal immediately to the Arizona Supreme Court. Blaney had stated June 15 that a stay "will remove any authority I have to rule further" on contempt — so the June 30 contempt hearing is effectively voided, and the ruling also appears to pause special prosecutor Kent Volkmer's scanner-removal probe. Whether the June 22 mediation (before retired Judge Christopher Coury) still proceeds was unconfirmed as of June 18; County Attorney Rachel Mitchell's team said it was "still evaluating" the stay's effect on its America First Legal motion.</p>
+        <p><span class="label">Update (June 22)</span>The court-ordered mediation before retired Judge Christopher Coury was set for <strong>today, June 22</strong>. As of compile time, no source had confirmed whether Heap had actually filed his promised emergency appeal to the Arizona Supreme Court, and the mediation's outcome was not public (status unconfirmed). The dispute stayed in the headlines over the weekend: in a June 19–20 radio interview, Supervisor Thomas Galvin gave a detailed public account of the March 12 incident — alleging a Recorder's Office IT employee used another worker's badge to enter the locked "ballot cage" and removed a Board-owned scanner, forcing a roughly $70,000 replacement — sharpening the rhetoric even as the appellate stay leaves the Board in operational control of IT staff, drop boxes, and vote centers as early voting begins June 24.</p>
+        <p><span class="label">What to watch</span>Whether Heap actually files his Arizona Supreme Court appeal and what the June 22 mediation produced; the fate of Volkmer's charging decision and Mitchell's AFL motion under the stay; whether the appellate freeze (Board retains IT staff and control through the primary) keeps operations stable as early voting begins June 24.</p>
+        <p class="sources"><span class="label">Sources</span><a href="https://www.kjzz.org/elections/2026-06-16/maricopa-county-election-fight-judge-orders-recorder-supervisors-to-enter-mediation">KJZZ (June 16, mediation order)</a> · <a href="https://ktar.com/arizona-politics-news/justin-heap-election-fight/5880163/">KTAR (June 16)</a> · <a href="https://www.kjzz.org/elections/2026-06-11/security-video-shows-maricopa-county-recorders-office-staff-accused-of-removing-voting-equipment">KJZZ (June 11)</a> · <a href="https://ktar.com/arizona-politics-news/election/ballot-scanner-vid/5878952/">KTAR (June 11)</a> · <a href="https://www.votebeat.org/arizona/2026/06/09/maricopa-county-justin-heap-board-supervisors-special-prosecutor-kent-volkmer-scanner/">Votebeat Arizona (June 9)</a> · <a href="https://azmirror.com/2026/06/09/special-prosecutor-investigating-latest-election-control-disagreement-in-maricopa-county/">Arizona Mirror</a> · <a href="https://www.votebeat.org/arizona/2026/05/29/maricopa-county-recorder-justin-heap-board-of-supervisors-contempt-court-2026-primary/">Votebeat (contempt motion)</a> · <a href="https://www.ms.now/news/news-analysis/maricopa-county-recorder-stephen-miller-america-first-legal-rachel-mitchell">MS NOW (Mitchell/AFL filing)</a> · <a href="https://www.votebeat.org/arizona/2026/06/18/appeals-court-maricopa-county-recorder-justin-heap-board-supervisors-stay-primary/">Votebeat (June 18 stay)</a> · <a href="https://www.kjzz.org/elections/2026-06-18/arizona-appeals-court-blocks-maricopa-county-election-changes-ahead-of-july-21-primary">KJZZ (June 18)</a> · <a href="https://azmirror.com/briefs/arizona-court-of-appeals-pauses-judges-ruling-on-election-powers-in-maricopa-county/">Arizona Mirror (June 18)</a> · <a href="https://ktar.com/arizona-politics-news/maricopa-county-supervisor-slams-recorder-justin-heap-over-disturbing-election-security-breach/5881603/">KTAR (June 19–20, Galvin interview)</a></p>
+      </article>
+
+      <article class="item critical" data-pillar="trump-admin" data-severity="critical" data-date="2026-06-08" data-sev-rank="3">
+        <div class="badge-row"><span class="badge sev">Critical</span><span class="badge pillar">Trump Admin</span></div>
+        <h3>Federal Re-Investigation of Arizona's 2020 Election Continues to Expand</h3>
+        <p class="meta">DOJ / FBI · Grand jury subpoena to Arizona Senate · March 7 – June 8, 2026</p>
+        <p>The federal investigation into Arizona's 2020 election remains active. In March, FBI agents took more than 36 hard drives and servers of Cyber Ninjas "audit" data from the Arizona Senate under a grand jury subpoena to Senate President Warren Petersen, in a White House-directed probe led by attorney Kurt Olsen, who aided efforts to overturn the 2020 result. Acting AG Todd Blanche has publicly confirmed multiple active DOJ investigations into Arizona elections. Election experts note the seized data was found fatally flawed years ago and warn the probe's function is to seed doubt about 2026 and 2028 results.</p>
+        <p><span class="label">What it means</span>An active federal investigation during the run-up to the primary creates operational and political pressure on Maricopa County and signals federal interest in relitigating 2020 through administrative process.</p>
+        <p><span class="label">What to watch</span>New subpoenas, indictments, or public DOJ statements; expansion to other Arizona counties; coordination with parallel probes in Milwaukee and Fulton County.</p>
+        <p class="sources"><span class="label">Sources</span><a href="https://www.votebeat.org/arizona/2026/03/09/maricopa-county-2020-election-fbi-records-warren-petersen/">Votebeat Arizona</a> · <a href="https://www.votebeat.org/national/2026/06/08/fbi-investigation-2020-election-trump-milwaukee-fulton-maricopa/">Votebeat National (June 8)</a> · <a href="https://www.propublica.org/article/maricopa-county-arizona-election-records-fbi">ProPublica</a> · <a href="https://www.cnn.com/2026/03/09/politics/fbi-subpoena-records-arizona-senate-audit-maricopa-county">CNN</a></p>
+      </article>
+
+      <article class="item critical" data-pillar="judicial" data-severity="critical" data-date="2026-06-22" data-sev-rank="3">
+        <div class="badge-row"><span class="badge sev">Critical</span><span class="badge pillar">Judicial</span><span class="badge new">New this week</span></div>
+        <h3>Supreme Court Takes No Action on Arizona Proof-of-Citizenship Petitions; Case Relisted/Held</h3>
+        <p class="meta">RNC v. Mi Familia Vota · U.S. Supreme Court · Considered at June 18 conference · No action on June 22 order list (relisted/held)</p>
+        <p>The Trump DOJ filed a brief urging the U.S. Supreme Court to grant review in RNC v. Mi Familia Vota and uphold Arizona's HB 2492/HB 2243 documentary proof-of-citizenship laws, after the 9th Circuit affirmed the injunction (Feb. 2025) and denied en banc rehearing (Sept. 2025). DOJ argues the National Voter Registration Act does not bar removing alleged noncitizens within 90 days of an election, requiring documentary proof of citizenship on state registration forms, or denying mail ballots to voters without it. A cert decision is pending.</p>
+        <p><span class="label">What it means</span>A ruling for petitioners could authorize late-cycle voter purges and proof-of-citizenship mandates nationwide and directly affects Arizona's ~50,000 federal-only voters. With DOJ backing, the odds of a cert grant rise materially.</p>
+        <p><span class="label">Update (June 19)</span>The petitions (consolidated with <em>Petersen v. Mi Familia Vota</em> and <em>Arizona v. Promise Arizona</em>) were distributed for the justices' June 18 conference. As of June 19 the Court had taken no action — no grant, denial, relist, or hold has posted; an orders-list action is most likely the week of June 22. If review is granted, argument would fall in the October 2026 term, after the midterms but shaping 2028.</p>
+        <p><span class="label">Update (June 22)</span>The Supreme Court's <strong>June 22 order list</strong> (608 U.S.) did <strong>not</strong> include the three consolidated petitions (Nos. 25-1017, 25-1019, 25-1022) — the Court neither granted nor denied review, so the case was effectively <strong>relisted/held</strong> rather than acted on out of the June 18 conference, and SCOTUSblog now lists it for the Court's next conference. The practical effect: <strong>no cert decision before the July 21 primary</strong>, with reconsideration most likely at the Court's late-September "long conference" opening the October 2026 term. The 2024 partial stay allowing Arizona to enforce the registration-form proof-of-citizenship provision (A.R.S. § 16-121.01(C)) remains in effect in the meantime.</p>
+        <p><span class="label">What to watch</span>Whether the petitions are granted, denied, or relisted again at the late-September long conference; any further DOJ filing; impact on the ~50,000 Arizona federal-only voters.</p>
+        <p class="sources"><span class="label">Sources</span><a href="https://www.scotusblog.com/cases/case-files/republican-national-committee-v-mi-familia-vota/">SCOTUSblog case file</a> · <a href="https://www.democracydocket.com/cases/arizona-citizenship-requirement-challenge/">Democracy Docket</a> · <a href="https://www.brennancenter.org/our-work/court-cases/mi-familia-vota-v-fontes">Brennan Center</a> · <a href="https://azfreenews.com/2026/05/doj-defends-arizonas-proof-of-citizenship-voting-requirements-at-supreme-court/">AZ Free News</a> · <a href="https://www.supremecourt.gov/orders/courtorders/062226zor_g314.pdf">U.S. Supreme Court order list (June 22, 2026)</a></p>
+      </article>
+
+      <article class="item critical" data-pillar="trump-admin" data-severity="critical" data-date="2026-06-18" data-sev-rank="3">
+        <div class="badge-row"><span class="badge sev">Critical</span><span class="badge pillar">Trump Admin</span></div>
+        <h3>Mail-Ballot Executive Order: Implementation Races the Courts as USPS Proposes "No List, No Delivery"</h3>
+        <p class="meta">EO 14399 · USPS records-system notice + DHS memo filed June 18 · D.C. Circuit appeal pending · June 8 – June 18, 2026 (updated)</p>
+        <p>Implementation of President Trump's March 31 executive order is accelerating even as the legal landscape shifts weekly. CNN reported June 10 that under USPS's proposed rule, the Postal Service would not deliver mail ballots for states that fail to hand over voter "participation lists" with per-ballot barcodes; the comment period closes July 2. A June 8 DOJ court filing disclosed that DHS has dropped the error-prone SAVE database from EO implementation and abandoned a planned voter-roll upload portal, but still plans to deliver state-specific federal citizenship data (via SSA and the State Department) to election officials by June 30 — six days after Arizona early voting begins. Experts including David Becker call the walk-back a "rope-a-dope" to keep the lawsuits unripe. On June 11, the D.C. Circuit expedited the Democrats' appeal of Judge Nichols's May 28 injunction denial (briefing complete July 6); the Boston preliminary-injunction ruling remains pending. Separately, DOJ argued in a June 9 Georgia filing that the NVRA's 90-day "quiet period" does not bar states from purging voters individually based on systematic federal referrals.</p>
+        <p><span class="label">What it means</span>Roughly 80% of Arizonans vote by mail. The order remains unenjoined, and the administrative machinery — USPS rulemaking plus federal citizenship lists landing mid-primary — could disrupt or delegitimize Arizona's mail-ballot system before any court rules on the merits. The DOJ purge theory would let federal referrals drive removals inside the pre-election protection window.</p>
+        <p><span class="label">Update (June 18)</span>Two filings in <em>DSCC v. Trump</em> show implementation accelerating. USPS filed a Privacy Act <strong>System of Records Notice</strong> disclosing it has begun building a records system to track mail and absentee ballots — a precursor to its proposed "no list, no delivery" rule (comments still close July 2). The same day, a disclosed <strong>June 8 DHS memo</strong> confirmed USCIS is "on track" to give state election officials portal access (via Login.gov) to citizenship lists drawn from USCIS, SSA, and State Department data by <strong>June 30</strong> — but the voter-facing portal that would let individuals check and correct their own records will not be ready by then, so voters could be flagged before they can contest. The memo says USCIS is "exploring" coordinating with USPS on mail-ballot participation data, with "no determination" yet on legality. The D.C. Circuit appeal remains on its expedited schedule (response due June 29, reply July 6); no ruling June 17–19, and the Boston preliminary-injunction decision is still pending.</p>
+        <p><span class="label">Update (June 22)</span>The Friday–Monday window was quiet: no new ruling from the D.C. Circuit (response brief due June 29, reply July 6) or the Boston court (which on June 18 let the challenge proceed as to the midterms but has not ruled on the preliminary-injunction request), and no public movement on the USCIS citizenship-list portal — still slated to go live <strong>June 30, now eight days out and six days into Arizona early voting</strong>. The USPS "no list, no delivery" comment period still closes July 2.</p>
+        <p><span class="label">What to watch</span>Whether DHS actually opens the citizenship-list portal to Arizona by June 30 and how counties handle it; the D.C. Circuit and Boston rulings; the USPS Federal Register records notice; USPS rule comments due July 2; AG Mayes/SOS Fontes responses.</p>
+        <p class="sources"><span class="label">Sources</span><a href="https://www.cnn.com/2026/06/10/politics/postal-service-deliver-mail-in-ballots">CNN (June 10)</a> · <a href="https://www.democracydocket.com/news-alerts/in-hopeful-sign-for-mail-in-voting-court-fast-tracks-bid-to-block-trump-order/">Democracy Docket (June 11)</a> · <a href="https://azmirror.com/2026/06/10/repub/homeland-security-retreats-on-plan-to-harvest-data-on-millions-of-mail-in-voters-under-trump-executive-order/">Arizona Mirror (June 10)</a> · <a href="https://www.democracydocket.com/news-alerts/trump-doj-doubles-down-on-claim-that-states-can-purge-voters-right-before-elections/">Democracy Docket (NVRA filing)</a> · <a href="https://www.azag.gov/press-release/attorney-general-mayes-and-secretary-state-fontes-sue-trump-administration-over">AZ Attorney General release</a> · <a href="https://www.votebeat.org/national/2026/05/28/trump-executive-order-mail-ballots-midterm-elections-carl-nichols/">Votebeat (May 28)</a> · <a href="https://www.democracydocket.com/news-alerts/postal-service-takes-another-step-toward-implementing-trumps-anti-mail-voting-order/">Democracy Docket (June 18, USPS records notice)</a> · <a href="https://www.democracydocket.com/news-alerts/states-to-get-citizenship-lists-before-voters-can-check-for-errors/">Democracy Docket (June 18, DHS memo)</a></p>
+      </article>
+
+      <article class="item elevated" data-pillar="judicial" data-severity="elevated" data-date="2026-06-16" data-sev-rank="2">
+        <div class="badge-row"><span class="badge sev">Elevated</span><span class="badge pillar">Judicial</span></div>
+        <h3>Election Rulebook Under Multi-Front Legal Attack Before the Primary</h3>
+        <p class="meta">Winn v. Fontes (federal, Judge Liburdi) · Pinal ruling May 1 · PI hearing opened June 16 · May 1 – June 16, 2026 (updated)</p>
+        <p>The 2025 Elections Procedures Manual governing the 2026 cycle is being dismantled piece by piece. On May 1, Judge Blaney struck the EPM's out-of-precinct voter accommodation rule in Pinal County's favor. On May 12, Pima County GOP chair Kathleen Winn and the Oversight Project sued Fontes and Mayes over EPM provisions allowing officials to remove people near polling places wearing official-looking apparel intended to intimidate voters, seeking a preliminary injunction before the primary. Mayes responded June 9 that plaintiffs "can't cite a single time" the rules were misused. Fontes had already deleted the provision letting the SOS certify statewide results without a delinquent county — removing a key certification backstop.</p>
+        <p><span class="label">What it means</span>County officials and poll workers face rules uncertainty weeks before the primary, and the anti-intimidation toolkit for polling places may be enjoined exactly when it is most needed.</p>
+        <p><span class="label">Update (June 16)</span>The preliminary-injunction hearing opened June 16 before U.S. District Judge Michael Liburdi in Phoenix. GOP witnesses — including former Pima County GOP chair Jeff Clark — conceded under cross-examination that they knew of no instance in which the challenged anti-intimidation rule had ever been misused or any uniformed officer turned away from voting. Per Capitol Media Services reporting, Liburdi did not rule; the proceeding resumes "next week" with additional witnesses, leaving the outcome unsettled with roughly five weeks until the July 21 primary.</p>
+        <p><span class="label">Update (June 19)</span>Per Capitol Media Services (June 19), Judge Liburdi still has not ruled; the trial resumes the week of June 22 with additional witnesses, meaning no injunction is in place as early voting begins June 24.</p>
+        <p><span class="label">Update (June 22)</span>The trial is set to resume this week (week of June 22) with additional witnesses; no ruling and no injunction had issued as of compile time, so the EPM's anti-intimidation rule remains in force as mail ballots go out June 24.</p>
+        <p><span class="label">What to watch</span>When the hearing resumes and whether Liburdi rules before poll-worker deployments for the July 21 primary; further EPM challenges; how counties handle out-of-precinct voters absent the struck rule.</p>
+        <p class="sources"><span class="label">Sources</span><a href="https://tucson.com/news/state-regional/government-politics/elections/article_5ddf4168-48e3-48a1-a235-c7e5a615cddd.html">Arizona Daily Star / Capitol Media Services (June 17, hearing)</a> · <a href="https://azmirror.com/2026/06/09/mayes-pima-county-gop-cant-cite-a-single-time-the-rules-they-want-blocked-were-misused/">Arizona Mirror (June 9)</a> · <a href="https://azcapitoltimes.com/news/2026/05/18/pima-county-republicans-seek-to-overturn-polling-site-regulations/">AZ Capitol Times</a> · <a href="https://azmirror.com/2026/05/01/judge-strikes-down-rule-requiring-counties-to-aid-voters-who-go-to-wrong-polling-place/">Arizona Mirror (May 1)</a> · <a href="https://www.votebeat.org/arizona/2025/08/04/secretary-of-state-adrian-fontes-election-procedure-manual-2026/">Votebeat (EPM background)</a> · <a href="https://www.kjzz.org/elections/2026-06-19/this-case-is-challenging-arizona-rules-about-people-in-uniforms-at-polling-places">KJZZ / Capitol Media Services (June 19)</a></p>
+      </article>
+
+      <article class="item elevated" data-pillar="admin" data-severity="elevated" data-date="2026-05-20" data-sev-rank="2">
+        <div class="badge-row"><span class="badge sev">Elevated</span><span class="badge pillar">Election Admin</span></div>
+        <h3>Maricopa Drop Box Dispute Escalates With Felony Threats</h3>
+        <p class="meta">Maricopa County Board of Supervisors meeting · May 20–21, 2026</p>
+        <p>Hours before a routine Board of Supervisors vote on vote center and drop box locations for the July 21 primary, an attorney for Recorder Justin Heap — James Rogers of America First Legal — sent a letter warning that election workers who collect ballots from drop boxes not authorized by the Recorder could face class-5 felony charges under Arizona's ballot harvesting statute. The Board passed the resolution 5–0. Supervisors said the threat "puts a target on the back" of hundreds of election workers and volunteers; the EPM provides that ballot drop-off locations are approved by the Board.</p>
+        <p><span class="label">What it means</span>Felony threats against election workers, even if unenforceable, raise the personal-risk calculus for staffing the primary and risk voter confusion about which drop boxes are legitimate.</p>
+        <p><span class="label">What to watch</span>Whether the Maricopa County Attorney takes a public position; whether any charges are actually pursued; drop-box usage and staffing levels in early voting.</p>
+        <p class="sources"><span class="label">Sources</span><a href="https://www.kjzz.org/elections/2026-05-20/drop-box-dispute-and-legal-threats-reignite-maricopa-county-election-fight">KJZZ</a> · <a href="https://azmirror.com/2026/05/21/maricopa-county-recorder-justin-heap-threatens-felony-charges-over-unauthorized-drop-boxes/">Arizona Mirror</a> · <a href="https://www.votebeat.org/arizona/2026/05/21/maricopa-county-board-supervisors-justin-heap-ballot-drop-boxes-primary-election/">Votebeat Arizona</a></p>
+      </article>
+
+      <article class="item elevated" data-pillar="admin" data-severity="elevated" data-date="2026-03-03" data-sev-rank="2">
+        <div class="badge-row"><span class="badge sev">Elevated</span><span class="badge pillar">Election Admin</span></div>
+        <h3>Cochise County Revives Debunked Machine Claims; 2026 Certification Refusal Risk</h3>
+        <p class="meta">Cochise County Board of Supervisors · September 2025 – March 2026 · Ongoing</p>
+        <p>On Feb. 24, the Cochise County Board voted to ask DNI Tulsi Gabbard to investigate the repeatedly debunked claim that voting-machine test labs were improperly accredited — the same theory behind its 2022 certification refusal — and in March asked DOJ to "prove the integrity" of its 2022 machines. Supervisors discussed abandoning tabulation machines for hand counts as early as September 2025. Meanwhile, the prosecution of Supervisor Tom Crosby for the 2022 certification delay has stalled (trial dates floated for early 2027), and AG candidate Warren Petersen has said he would drop the case if elected — removing the chief deterrent against a 2026 refusal. On June 9, Crosby's lawyer reportedly filed a notice of claim demanding the county cover roughly $263,000 in defense legal fees to date (status unconfirmed).</p>
+        <p><span class="label">What it means</span>A board with a proven willingness to delay certification is rebuilding the rationale to do it again, while the accountability precedent that constrained it may evaporate after November. Statewide canvass deadlines hit in late November and December 2026.</p>
+        <p><span class="label">What to watch</span>Any formal hand-count motion; federal responses to the Gabbard/DOJ letters; Crosby trial scheduling; the AG race.</p>
+        <p class="sources"><span class="label">Sources</span><a href="https://www.votebeat.org/arizona/2026/03/03/cochise-county-supervisors-ask-tulsi-gabbard-investigate-voting-machines-2022/">Votebeat Arizona</a> · <a href="https://www.kjzz.org/the-show/2026-03-09/what-to-expect-if-cochise-county-board-of-supervisors-refuse-to-certify-2026-election-results">KJZZ</a> · <a href="https://www.votebeat.org/arizona/2025/09/04/cochise-county-supervisors-discuss-hand-counting-ballots/">Votebeat (hand counts)</a> · <a href="https://www.tucsonsentinel.com/local/report/010826_crosby_immunity/az-supreme-court-rejects-crosbys-appeal-over-legislative-immunity-election-certification-case">Tucson Sentinel (Crosby)</a></p>
+      </article>
+
+      <article class="item critical" data-pillar="legislative" data-severity="critical" data-date="2026-06-13" data-sev-rank="3">
+        <div class="badge-row"><span class="badge sev">Critical</span><span class="badge pillar">Legislative</span></div>
+        <h3>HCR 2001 Referred to the November Ballot: Mail-Voter-ID Amendment Bypasses Hobbs's Veto</h3>
+        <p class="meta">HCR 2001 · Referred on party-line vote during sine die · Legislature adjourned early Sat. June 13, 2026</p>
+        <p>The single biggest development since the last edition: in a marathon final session that ended around 4:45 a.m. Saturday, June 13, the GOP-controlled Legislature voted along party lines to refer a pared-down HCR 2001 — Rep. Alexander Kolodin's two-year effort, now styled the "Fast, Accurate, Secure, Transparent Election Results Act" / "Arizona Secure Elections Act" — directly to the November 3 ballot, circumventing Governor Hobbs's veto (she has vetoed 71 election bills over three sessions). The final measure would amend the constitution to require <strong>all voters, including mail voters, to provide "valid government-issued proof of identity"</strong> before casting a ballot; declare that elections be decided solely by eligible citizen voters; bar foreign nationals from spending to influence Arizona elections; and require polling places to offer on-site tabulation for voters who drop off mail ballots. If voters approve it, it takes effect in <strong>2028</strong> and obligates the state to fund implementation. The early-ballot return-deadline provisions (the Friday-before cutoff) in earlier drafts were stripped out, and county officials and Democrats say it is now unclear how mail voters would actually furnish ID. The competing SCR 1014 (Sen. Bolick) died — it was not among the 10 measures referred.</p>
+        <p><span class="label">What it means</span>A tracked "pending" threat is now a certainty on the November ballot. Constitutionalizing a proof-of-identity mandate for the voting method used by ~80% of Arizonans — decided in a single referendum that LNP-AZ's voter-education and business-community work must now engage directly. Because it would take effect in 2028, the operational risk is to the next cycle, but the campaign and messaging fight begins now and runs through November 3.</p>
+        <p><span class="label">What to watch</span>Proposition-number assignment (Arizona Mirror confirms June 18 the 10 referred measures get numbers "later this summer"); the dueling-measures dynamic with the Protect the Vote AZ citizen initiative (July 2 signature deadline); early polling and which business/trade groups take positions on what is now styled the "Fast Election Results Act."</p>
+        <p class="sources"><span class="label">Sources</span><a href="https://www.democracydocket.com/news-alerts/arizona-passes-voter-id-ballot-measure-for-november/">Democracy Docket</a> · <a href="https://www.votebeat.org/arizona/2026/06/13/2026-ballot-measure-voting-changes-republican-voter-id-fast-election-results/">Votebeat Arizona (June 13)</a> · <a href="https://www.kjzz.org/politics/2026-06-13/here-are-the-10-measures-lawmakers-sent-to-the-arizona-ballot-in-november">KJZZ (10 measures)</a> · <a href="https://azmirror.com/2026/06/13/az-legislature-ends-2026-session-after-late-night-gop-push-to-send-conservative-agenda-to-voters/">Arizona Mirror (June 13)</a> · <a href="https://www.azleg.gov/press/house/57LEG/2R/260612KOLODINHCR2001.pdf">azleg.gov press release</a></p>
+      </article>
+
+      <article class="item elevated" data-pillar="legislative" data-severity="elevated" data-date="2026-06-19" data-sev-rank="2">
+        <div class="badge-row"><span class="badge sev">Elevated</span><span class="badge pillar">Legislative</span></div>
+        <h3>SAVE America Act Finds a New Vehicle: Trump Demands It Be Welded to FISA Section 702 Renewal</h3>
+        <p class="meta">SAVE America Act · FISA §702 lapsed June 12 · Trump posts June 14 & 17 · Clayton DNI hearing canceled June 17 (updated)</p>
+        <p>One week after the Senate blocked the SAVE Act (June 4), President Trump demanded Republicans "IMMEDIATELY" pass a roughly $350 billion defense reconciliation bill folding in the SAVE America Act — documentary proof of citizenship for registration, photo ID requirements, and sharp mail-voting restrictions — claiming the Pentagon requested it; Defense Secretary Hegseth vowed DOD "will make this happen." The new development since the last edition is the <strong>GOP pushback</strong>: Senate Appropriations Chair Susan Collins called a third reconciliation bill a "terrible risk," and Defense Subcommittee Chair Mitch McConnell voiced doubt, with the third-megabill odds described as a "long shot." No new Senate floor vote has occurred since June 4. Reconciliation bypasses the 60-vote filibuster, but the Byrd rule remains a substantial obstacle to non-budgetary election provisions surviving the parliamentarian.</p>
+        <p><span class="label">Update (June 17)</span>The strategy pivoted from the stalled $350B defense-reconciliation route to a new hostage: surveillance law. FISA Section 702 lapsed June 12 for the first time since 2008 after a House extension vote failed 198–218. In Truth Social posts June 14 and June 17, Trump declared he will not support reauthorizing §702 unless the SAVE America Act is "firmly attached" to it, and on June 17 he canceled the Senate Intelligence Committee confirmation hearing for his DNI nominee Jay Clayton (tying it to a separate U.S. Attorney fight). Intel Chair Tom Cotton refused to cancel the hearing, and Majority Leader John Thune said attaching SAVE to FISA is "unrealistic" and the votes "aren't there." The reconciliation gambit (Collins/McConnell skepticism) saw no new floor movement in this window.</p>
+        <p><span class="label">Update (June 19)</span>The standoff hardened but produced no §702 vote. VP JD Vance pressed the Senate June 18 to "force people to vote against" the SAVE Act rather than let the filibuster bury it, and House Republicans split openly — Rep. Anna Paulina Luna vowed "No SAVE America. No FISA," and Rep. Andy Biggs (R-AZ) backed the linkage, even as Speaker Johnson and Trump simultaneously floated a "clean" 18-month §702 extension. The downstream effect of the canceled Clayton hearing landed June 19: FHFA Director Bill Pulte — whose involvement triggered the Democratic blockade — was set to take over as Acting DNI, and the Clayton hearing has not been rescheduled. Context worth noting: the FISA Court's current annual certification reportedly runs through March 2027, so §702 collection continues operating despite the statutory lapse, tempering "imminent shutdown" framing.</p>
+        <p><span class="label">Update (June 22)</span>No floor action over the weekend: with the House in recess until <strong>June 23</strong>, there was no §702 reauthorization vote and no SAVE Act movement June 19–22. The standoff is unchanged — Thune still calls attaching SAVE to §702 a non-starter; Trump still demands it. Separately, FHFA Director Bill Pulte formally took over as <strong>Acting DNI on June 19</strong> (see the slow-count / Clayton item).</p>
+        <p><span class="label">What it means</span>The most direct federal override of Arizona's registration and mail-voting practices — which the dashboard had marked as defeated — has found a fresh must-pass vehicle in the lapsed §702 renewal, raising leverage even as GOP leadership signals it won't fold the two together. If SAVE text ever rode a §702 bill to passage, it would upend Arizona's Active Early Voting List and bifurcated federal/state registration system, affecting the ~80% of Arizonans who vote by mail.</p>
+        <p><span class="label">What to watch</span>Whether §702 reauthorization advances and whether SAVE text is attached; whether the Clayton hearing proceeds over Trump's objection; Thune's posture; how Arizona's congressional delegation positions itself.</p>
+        <p class="sources"><span class="label">Sources</span><a href="https://www.npr.org/2026/06/17/nx-s1-5859298/jay-clayton-confirmation-hearing-director-of-national-intelligence">NPR (June 17)</a> · <a href="https://www.nbcnews.com/politics/donald-trump/trump-delays-jay-clayton-nomination-intel-director-fisa-save-america-rcna350470">NBC News (June 17)</a> · <a href="https://www.axios.com/2026/06/14/trump-fisa-renewal-save-america-act">Axios (June 14)</a> · <a href="https://thehill.com/homenews/administration/5927665-donald-trump-pauses-clayton-dni-nomination/">The Hill (June 17)</a> · <a href="https://www.foxnews.com/politics/trumps-push-350-billion-arsenal-freedom-hits-gop-skepticism">Fox News</a> · <a href="https://www.democracydocket.com/news-alerts/trump-military-anti-voting-save-america-act-defense-bill/">Democracy Docket</a> · <a href="https://www.mediaite.com/media/news/no-games-trump-demands-gop-lawmakers-immediately-pass-350b-military-bill-and-voter-id-law/">Mediaite</a> · <a href="https://thehill.com/homenews/house/5931298-trump-save-act-fisa-renewal/">The Hill (June 18)</a> · <a href="https://washingtonmonthly.com/2026/06/19/trump-section-702-fisa-reauthorization-save-act/">Washington Monthly (June 19)</a></p>
+      </article>
+
+      <article class="item elevated" data-pillar="trump-admin" data-severity="elevated" data-date="2026-02-24" data-sev-rank="2">
+        <div class="badge-row"><span class="badge sev">Elevated</span><span class="badge pillar">Trump Admin</span></div>
+        <h3>Federal Election-Security Pullback Leaves Arizona "Flying Blind"</h3>
+        <p class="meta">CISA / EI-ISAC defunding · March 2025 – ongoing · CIS memo Feb. 24, 2026</p>
+        <p>CISA's termination of EI-ISAC/MS-ISAC support, confirmed deeper by a February 2026 Center for Internet Security funding memo, has stripped Arizona of federal cyber threat-sharing, physical security assessments, and county security tours (CISA missed tours in 8 of 15 Arizona counties). SOS Fontes says his office is "effectively flying blind" and is exploring state-funded substitutes; U.S. senators warned in May that the pullback leaves the midterms vulnerable.</p>
+        <p><span class="label">What it means</span>A direct reduction in cyber and physical security capacity for Arizona's 2026 elections, at the same time AI-enabled threats are rising (see Disinfo).</p>
+        <p><span class="label">What to watch</span>State budget action on a CIS/nonprofit substitute; any security incidents counties would previously have caught via federal threat-sharing.</p>
+        <p class="sources"><span class="label">Sources</span><a href="https://www.votebeat.org/2026/02/24/center-internet-security-memo-election-funding-cut/">Votebeat (CIS memo)</a> · <a href="https://www.12news.com/article/news/politics/elections/arizona-sounds-alarm-federal-cuts-leave-election-security-gaps/75-e6c405ab-d041-472e-9c17-6a79349b26cc">12News</a> · <a href="https://www.nextgov.com/cybersecurity/2026/05/senator-warns-cisa-election-security-pullback-could-leave-midterms-vulnerable/413378/">Nextgov/FCW</a> · <a href="https://www.brennancenter.org/our-work/research-reports/how-federal-government-undermining-election-security">Brennan Center</a></p>
+      </article>
+
+      <article class="item elevated" data-pillar="admin" data-severity="elevated" data-date="2026-03-24" data-sev-rank="2">
+        <div class="badge-row"><span class="badge sev">Elevated</span><span class="badge pillar">Election Admin</span></div>
+        <h3>Citizenship Investigations Continue Using Contested Federal Database</h3>
+        <p class="meta">Maricopa County Recorder · SAVE database · Reported March 24, 2026 · Ongoing</p>
+        <p>Maricopa County is investigating 207 voters whose citizenship status was flagged by the federal SAVE database. Earlier, Heap's office reported 137 flagged voters out of 61,681 reviewed (0.2%). SOS Fontes has called SAVE "notoriously inaccurate"; ProPublica documented incorrect SAVE returns in at least five other states — and a June 8 DOJ court filing disclosed that DHS itself has now dropped SAVE from mail-ballot EO implementation, an implicit concession on reliability even as county-level use continues. This sits atop the unresolved MVD tracking error that wrongly marked ~200,000 longtime voters as having shown proof of citizenship — with counties diverging on enforcement despite AG Mayes's 2025 opinion that these voters cannot be suspended.</p>
+        <p><span class="label">What it means</span>Acting on unreliable databases creates direct risk of challenging or removing eligible citizen voters — especially naturalized citizens — while the small flagged numbers get amplified into broad noncitizen-voting narratives the data does not support.</p>
+        <p><span class="label">Update (June 22)</span>A June 22 Votebeat national analysis quantified the reliability problem: states have run more than 60 million voter records through the revamped federal SAVE/immigration database, and DHS says roughly 24,000 (about 0.04%) were flagged as potential noncitizens and referred to ICE — yet election officials have already confirmed that some flagged "noncitizens" are in fact U.S. citizens. The finding reinforces the concern that SAVE-driven checks risk challenging eligible Arizona voters, especially naturalized citizens.</p>
+        <p><span class="label">What to watch</span>Disposition of the 207 cases; whether other counties adopt SAVE-based processes; litigation over the ~200,000-voter error as the cycle intensifies.</p>
+        <p class="sources"><span class="label">Sources</span><a href="https://www.votebeat.org/arizona/2026/03/24/maricopa-county-recorder-justin-heap-alleged-noncitizen-voters/">Votebeat Arizona</a> · <a href="https://www.votebeat.org/arizona/voter-citizenship-tracking-error/">Votebeat (tracking-error archive)</a> · <a href="https://www.votebeat.org/arizona/2025/08/18/proof-of-citizenship-error-attorney-general-kris-mayes-opinion/">Votebeat (Mayes opinion)</a> · <a href="https://www.votebeat.org/national/2026/06/22/trump-immigration-investigation-noncitizen-voters-concerns/">Votebeat National (June 22)</a></p>
+      </article>
+
+      <article class="item elevated" data-pillar="disinfo" data-severity="elevated" data-date="2026-05-18" data-sev-rank="2">
+        <div class="badge-row"><span class="badge sev">Elevated</span><span class="badge pillar">Disinfo (Officials)</span></div>
+        <h3>"200,000 Mismatched Signatures" Figure Recirculates Without Updated Verification</h3>
+        <p class="meta">Federal officials · Public remarks · May 2026</p>
+        <p><strong>Claim:</strong> Acting AG Blanche referenced a figure suggesting "more than 200,000 ballots with mismatched signatures may have been counted" in Maricopa County without review.</p>
+        <p><strong>In fact:</strong> The 200,000 estimate originates from the 2020 Arizona Senate-commissioned audit, which Maricopa County election officials and outside reviewers have disputed for five years. Maricopa County's own acknowledged figure of approximately 25,000 signature mismatches is roughly an eighth of that estimate, and the Recorder's office set a signature-verification record in the 2024 cycle. The figure has not been independently verified since the Senate audit.</p>
+        <p><span class="label">What it means</span>Reviving a contested five-year-old number as if it were a current finding — from a federal podium — is a recognizable delegitimization pattern that election administrators across the spectrum have flagged.</p>
+        <p class="sources"><span class="label">Sources</span><a href="https://elections.maricopa.gov/voting/just-the-facts.html">Maricopa County Elections fact page</a> · <a href="https://azmirror.com/2026/02/18/maricopa-county-recorders-claim-of-137-noncitizen-voters-may-be-too-high/">Arizona Mirror</a></p>
+      </article>
+
+      <article class="item emerging" data-pillar="admin" data-severity="emerging" data-date="2026-06-02" data-sev-rank="1">
+        <div class="badge-row"><span class="badge sev">Emerging</span><span class="badge pillar">Election Admin</span></div>
+        <h3>Election Funding Gaps Compound: Federal Grants Face Two-Thirds Cut</h3>
+        <p class="meta">HAVA Election Security Grants · NACo letter June 2, 2026 · FY2027 appropriations pending</p>
+        <p>The House-passed FY2027 appropriations bill funds HAVA Election Security Grants at $15 million — a $30 million cut from the FY2026 enacted $45 million — prompting the National Association of Counties to urge congressional leaders on June 2 to restore funding. In Arizona, the squeeze is structural: the Secretary of State has estimated HAVA-related shortfalls approaching $850,000, the counties' $5.4 million FY2020 HAVA appropriation lapses June 30, 2026, and chronic under-resourcing drives the staffing instability already tracked here (Pinal County has had five elections directors since 2020). This compounds the CISA/EI-ISAC security pullback (see Trump Admin pillar).</p>
+        <p><span class="label">What it means</span>Counties absorbing federal security-support losses are simultaneously facing cuts to the grant program that would pay for replacements — equipment refresh, cyber hardening, and staffing ahead of 2028 all get harder. Underfunded offices are also more error-prone, and errors feed fraud narratives.</p>
+        <p><span class="label">Update (June 15)</span>Gov. Hobbs signed the ~$18.3B FY2027 bipartisan budget on June 13 (see Bright Spots), removing the shutdown risk — but published budget coverage contains no mention of HAVA, the SOS ~$850K shortfall, or the lapsing $5.4M county appropriation, so whether the budget actually cures the June 30 county HAVA lapse is <strong>status unconfirmed</strong> pending JLBC budget-bill summaries.</p>
+        <p><span class="label">Update (June 22)</span>Still unconfirmed eight days out: the budget coverage and JLBC summaries reviewed this cycle do not address whether the signed FY2027 budget extends the $5.4M county HAVA appropriation past its <strong>June 30, 2026</strong> lapse, and at the federal level the Senate has not yet marked up the FY2027 FSGG bill that carries the House's reduced $15M HAVA grant figure. Both remain open as the lapse date approaches.</p>
+        <p><span class="label">What to watch</span>Direct confirmation (JLBC summaries / azleg.gov) of whether the signed budget extends or replaces the lapsing county HAVA appropriation before the June 30 lapse date; Senate action on the FY2027 FSGG bill ($15M House figure); county election budget requests for the 2026 general.</p>
+        <p class="sources"><span class="label">Sources</span><a href="https://www.naco.org/news/naco-urges-congress-protect-hava-election-security-grants-fy-2027">NACo (June 2, 2026)</a> · <a href="https://azsos.gov/sites/default/files/docs/FY24-AZSOS-Funding-Request-Complete-Inclusive.pdf">AZ SOS funding request</a> · <a href="https://www.azjlbc.gov/26baseline/s2.pdf">AZ JLBC baseline (HAVA lapse date)</a> · <a href="https://issueone.org/press/new-report-reveals-alarming-election-official-turnover-and-offers-solutions/">Issue One (turnover)</a></p>
+      </article>
+
+      <article class="item emerging" data-pillar="judicial" data-severity="emerging" data-date="2026-06-18" data-sev-rank="1">
+        <div class="badge-row"><span class="badge sev">Emerging</span><span class="badge pillar">Judicial</span></div>
+        <h3>Fake Electors Prosecution Stalled; Accountability Hinges on November</h3>
+        <p class="meta">Maricopa Co. Superior Court · AZ Supreme Court review denied June 4 · Dismissal motion June 17; grand-jury deadline June 19 (updated)</p>
+        <p>The Arizona Supreme Court declined to review rulings sending AG Mayes's prosecution of 18 fake-elector defendants (including Mark Meadows and Rudy Giuliani) back to a grand jury over a due-process defect — the first grand jury wasn't shown the Electoral Count Act text. Mayes vows to re-present the full case to a new grand jury, but the case now likely stretches into 2027–28 and survives only if Mayes wins reelection: her opponent, Senate President Warren Petersen, has also pledged to drop the Cochise certification prosecution.</p>
+        <p><span class="label">What it means</span>The two principal in-state accountability mechanisms for 2020-style election subversion — the fake electors case and the Cochise certification prosecution — are both stalled, and both could be extinguished by a single statewide race.</p>
+        <p><span class="label">Update (June 17–18)</span>The prosecution hit a wall. Unable to convene a new grand jury within the 15-day window triggered by the June 4 denial of review (deadline June 19), the AG's criminal-division chief Nicholas Klingerman moved to <strong>dismiss the case without prejudice</strong>, telling Judge Sam Myers the state still intends to re-present but "that re-presentation will not happen within the 15-day deadline." Defense attorneys for Giuliani and others say they will ask Myers to dismiss <em>with</em> prejudice, which would bar refiling; Giuliani publicly celebrated. Judge Myers has not yet ruled on whether the dismissal is with or without prejudice — so whether the case can be revived at all is now an open question, layered atop the AG race that determines whether anyone will try.</p>
+        <p><span class="label">Update (June 22)</span>The June 19 re-presentation deadline passed with the AG's motion to dismiss <em>without</em> prejudice on the table; as of compile time, no source confirmed that Judge Myers had ruled on whether the dismissal is with or without prejudice (status unconfirmed). Until he does, whether the case can ever be refiled remains undecided.</p>
+        <p><span class="label">What to watch</span>Whether Judge Myers dismisses with or without prejudice; any re-presentation timeline if refiling survives; the AG race (Petersen has pledged to drop the Cochise prosecution); related anti-SLAPP and disqualification motions.</p>
+        <p class="sources"><span class="label">Sources</span><a href="https://www.votebeat.org/arizona/2026/06/04/supreme-court-attorney-general-kris-mayes-fake-electors-grand-jury-redo/">Votebeat Arizona</a> · <a href="https://www.kjzz.org/politics/2026-06-04/arizona-supreme-court-wont-overturn-judges-ruling-to-send-fake-elector-case-back-to-grand-jury">KJZZ</a> · <a href="https://azmirror.com/briefs/mayes-will-go-back-to-the-grand-jury-after-arizona-supreme-court-doesnt-revive-fake-electors-case/">Arizona Mirror</a> · <a href="https://www.kjzz.org/politics/2026-06-18/mayes-drops-charges-against-arizonas-fake-electors-but-plans-to-revive-the-case">KJZZ (June 18, dismissal)</a> · <a href="https://tucson.com/news/state-regional/government-politics/article_a3ba3ef3-c671-436e-9b82-4b0cb06b845a.html">Capitol Media Services (June 18)</a></p>
+      </article>
+
+      <article class="item emerging" data-pillar="legislative" data-severity="emerging" data-date="2026-05-06" data-sev-rank="1">
+        <div class="badge-row"><span class="badge sev">Emerging</span><span class="badge pillar">Legislative</span></div>
+        <h3>Vote-By-Mail Constitutional Amendment Races a July 2 Signature Deadline</h3>
+        <p class="meta">Protect the Vote AZ initiative · 383,923 valid signatures due July 2, 2026</p>
+        <p>The citizen initiative to enshrine mail and early voting in the Arizona constitution — a direct counter to HCR 2001/SCR 1014 — needs 383,923 valid signatures by July 2; the campaign is targeting 500,000. If it qualifies alongside the legislative referrals, November could feature dueling early-voting measures, with confusing pro/con framing for voters.</p>
+        <p><span class="label">What it means</span>A protective measure, but qualification is not assured, and a dueling-measures ballot raises the stakes and the confusion risk for the business community's voter-education work.</p>
+        <p><span class="label">What to watch</span>Signature totals at filing; signature-validity challenges (near-certain if it qualifies); which business and trade groups sign on.</p>
+        <p class="sources"><span class="label">Sources</span><a href="https://azmirror.com/2026/05/06/campaign-launched-to-enshrine-vote-by-mail-in-state-constitution-and-counter-gop-restrictions/">Arizona Mirror</a> · <a href="https://protectthevoteaz.com/">Protect the Vote AZ</a></p>
+      </article>
+
+      <article class="item emerging" data-pillar="legislative" data-severity="emerging" data-date="2026-05-01" data-sev-rank="1">
+        <div class="badge-row"><span class="badge sev">Emerging</span><span class="badge pillar">Legislative</span></div>
+        <h3>Brennan Center Flags Arizona Proposal on Federal Officers at Polling Sites</h3>
+        <p class="meta">Brennan Center State Voting Laws Roundup · May 2026</p>
+        <p>The Brennan Center's May 2026 State Voting Laws Roundup notes an Arizona proposal that would mandate federal immigration officers at every polling place and ballot drop box in the state. Nationally, lawmakers in at least 25 states have considered no fewer than 65 election interference bills in 2026.</p>
+        <p><span class="label">What it means</span>Federal immigration enforcement at polling sites would create significant chilling effects on turnout and complicate the operational role of nonpartisan poll workers.</p>
+        <p><span class="label">What to watch</span>Whether the proposal advances next session; any executive-branch effort to achieve the same outcome administratively.</p>
+        <p class="sources"><span class="label">Sources</span><a href="https://www.brennancenter.org/our-work/research-reports/state-voting-laws-roundup-may-2026">Brennan Center, May 2026 Roundup</a></p>
+      </article>
+
+      <article class="item emerging" data-pillar="disinfo" data-severity="emerging" data-date="2026-06-01" data-sev-rank="1">
+        <div class="badge-row"><span class="badge sev">Emerging</span><span class="badge pillar">Disinfo</span></div>
+        <h3>Surge of Impersonation Websites and AI Content Ahead of the Midterms</h3>
+        <p class="meta">Researchers / AZPM · Reported June 1–2, 2026</p>
+        <p>Researchers report a surge of newly registered websites impersonating voter-information sites and spreading false candidate information ahead of the midterms, alongside proliferating AI deepfake political ads nationally. No major Arizona-specific deepfake incident has been confirmed as of June 10, but mitigation infrastructure exists in the state's AI and Election Security Advisory Committee and ASU's AI & Elections Clinic — even as federal security support recedes (see CISA item).</p>
+        <p><span class="label">What it means</span>The information environment for the July primary and November general is degrading faster than the official-channel defenses are being built, and voter-facing impersonation sites directly target the trust infrastructure our public-facing work relies on.</p>
+        <p><span class="label">What to watch</span>Any AZ-specific impersonation domain or deepfake incident; secretary of state advisories; platform takedown responsiveness.</p>
+        <p class="sources"><span class="label">Sources</span><a href="https://news.azpm.org/p/electioncoverage/2026/6/1/229950-why-a-surge-of-election-related-websites-could-spell-rising-cyber-threats-for-the-midterms/">AZPM</a> · <a href="https://spectrumlocalnews.com/us/snplus/politics/2026/06/02/election-security-disinformation-ai">Spectrum News</a> · <a href="https://www.rstreet.org/commentary/ai-and-elections-what-to-watch-for-in-2026/">R Street</a></p>
+      </article>
+
+      <article class="item emerging" data-pillar="admin" data-severity="emerging" data-date="2026-06-11" data-sev-rank="1">
+        <div class="badge-row"><span class="badge sev">Emerging</span><span class="badge pillar">Election Admin</span></div>
+        <h3>GOP Secretary of State Debate: Kolodin Won't Rule Out Handing Voter Rolls to Trump DOJ</h3>
+        <p class="meta">Clean Elections Commission debate (KAET-TV) · June 11, 2026</p>
+        <p>In the only scheduled GOP primary debate for Secretary of State, Rep. Alexander Kolodin criticized SOS Fontes for refusing to surrender Arizona's voter registration records to the Trump administration and repeatedly sidestepped moderator Ted Simons's question on whether he would turn the rolls over to DOJ if elected. Opponent Gina Swoboda (former AZGOP chair) said she would not turn over voter data "not without a court order," and warned that Kolodin's HCR 2001 referral "will crush mail voting in Arizona" and force rural counties into on-site tabulation they lack equipment for. The debate also resurfaced Kolodin's State Bar discipline over 2020 election litigation.</p>
+        <p><span class="label">What it means</span>The July 21 primary now directly shapes two tracked threats: federal access to Arizona's voter file (the subject of DOJ's dismissed lawsuit) and HCR 2001's mail-voting rollback. The two GOP candidates split on both — meaning the primary outcome materially changes the state's election-administration risk posture for 2027–2030.</p>
+        <p><span class="label">What to watch</span>Primary polling and endorsements; whether Kolodin clarifies his position on voter-file disclosure; Democratic-side positioning on the same questions.</p>
+        <p class="sources"><span class="label">Sources</span><a href="https://tucson.com/news/state-regional/government-politics/elections/article_4556d8c3-efc7-4ba3-ac22-ea321018e0be.html">Tucson.com / Capitol Media Services</a> · <a href="https://news.azpm.org/p/news-articles/2026/6/11/230097-primary-debate-arizona-secretary-of-state-r/">AZPM (debate)</a></p>
+      </article>
+      <article class="item emerging" data-pillar="admin" data-severity="emerging" data-date="2026-06-17" data-sev-rank="1">
+        <div class="badge-row"><span class="badge sev">Emerging</span><span class="badge pillar">Election Admin</span></div>
+        <h3>GOP Governor Debate: All Four Candidates Cast Doubt on Mail Voting; Frontrunner Pledges to Sign the HCR 2001 Framework</h3>
+        <p class="meta">Clean Elections Commission GOP gubernatorial debate · June 17, 2026</p>
+        <p>At the June 17 Republican primary debate for governor, all four candidates voiced distrust of Arizona’s mail-voting system. Rep. Andy Biggs — the frontrunner, who voted against certifying the 2020 results — pledged to sign a “Florida-style” election-overhaul bill mirroring HCR 2001’s framework. Ken Miceli pushed biometric voter-ID and citizenship verification; Scott Neely advocated “one day, one vote” in-person paper balloting that would largely eliminate mail voting; and Rep. David Schweikert defended mail voting on usage grounds while alleging — without evidence — that his deceased mother received ballots for years. Consultants criticized moderators for not pressing candidates on the 2020 results, which both Biggs and Schweikert had voted against certifying.</p>
+        <p><span class="label">What it means</span>Paired with the GOP Secretary of State debate, the July 21 primary is poised to install statewide officials who would sign and administer a sharply more restrictive mail-voting regime — the method ~80% of Arizonans use. The frontrunner’s pledge to enact the HCR 2001 framework legislatively, on top of the ballot measure, signals a two-track rollback, and a leading candidate’s unsubstantiated fraud anecdote keeps delegitimization narratives alive in the governor’s race.</p>
+        <p><span class="label">What to watch</span>Primary polling and endorsements; whether Biggs or Schweikert clarifies positions on mail voting and 2020; how the eventual nominee’s stance interacts with HCR 2001 and the Protect the Vote AZ initiative.</p>
+        <p class="sources"><span class="label">Sources</span><a href="https://azcapitoltimes.com/news/2026/06/18/biggs-schweikert-skip-the-fireworks-in-tame-gop-governor-debate/">AZ Capitol Times (June 18)</a> · <a href="https://azmirror.com/2026/06/17/in-gop-governor-debate-biggs-sets-sights-on-hobbs-while-schweikert-tries-to-slow-him-down/">Arizona Mirror (June 17)</a></p>
+      </article>
+
+      <article class="item emerging" data-pillar="disinfo" data-severity="emerging" data-date="2026-06-11" data-sev-rank="1">
+        <div class="badge-row"><span class="badge sev">Emerging</span><span class="badge pillar">Disinfo</span></div>
+        <h3>Slow-Count Delegitimization Template: Trump Attacks California Tally; DNI Nominee Echoed the Claim</h3>
+        <p class="meta">Trump remarks and Clayton DNI nomination · June 11, 2026</p>
+        <p>President Trump attacked California's routine multi-day vote count in the June 2 primary as evidence of fraud ("The Dumocrats are at it again"); election officials note incomplete election-night totals and multi-day mail-ballot counts are normal and lawful. The same day, Trump nominated SDNY U.S. Attorney Jay Clayton — who days earlier amplified the California fraud narrative on CNBC — as Director of National Intelligence, with a confirmation hearing set for June 17. CNN reports DOJ officials have declined to back the President's claims, one of which his own DOJ previously debunked.</p>
+        <p><span class="label">What it means</span>Arizona is the nation's most-watched slow-count state — Maricopa's full count has historically taken 10–13 days. The California attacks are a midterm-preview template that maps directly onto Arizona's July 21 primary and November general, and pairs with the tracked "200,000 mismatched signatures" claim. Putting an amplifier of those claims atop the intelligence community weakens a key institutional check on election-interference narratives.</p>
+        <p><span class="label">Update (June 17)</span>Trump abruptly canceled Clayton's scheduled June 17 Senate Intelligence confirmation hearing (linking it to an unrelated U.S. Attorney dispute and to his FISA §702 / SAVE Act demand — see Legislative pillar), leaving acting DNI Bill Pulte in place; Trump also said he wants Pulte to declassify 2020-election documents. Chair Tom Cotton said the committee would proceed anyway. The episode keeps an amplifier of fraud narratives in the intelligence orbit while the confirmation itself stalls.</p>
+        <p><span class="label">Update (June 22)</span>FHFA Director Bill Pulte officially became <strong>Acting DNI on June 19</strong> and, per CNN reporting, immediately moved to downsize the office — directing staff to compile a roughly 300-person firing list at the National Counterterrorism Center and requesting a full ODNI employee roster. Clayton's confirmation hearing remains canceled and unscheduled; FISA §702 remains lapsed; and no 2020-document "declassification" had been announced as of compile time. No new Arizona-specific fraud claim surfaced over the weekend, but seating an amplifier of fraud narratives atop the intelligence community remains the structural concern as Arizona's slow July count approaches.</p>
+        <p><span class="label">What to watch</span>Whether the Clayton hearing proceeds over Trump's objection; any 2020-document "declassification" by acting DNI Pulte; pre-emptive delegitimization of Arizona's primary count; county and SOS communication plans for managing count-duration expectations.</p>
+        <p class="sources"><span class="label">Sources</span><a href="https://azmirror.com/2026/06/11/repub/the-dumocrats-are-at-it-again-trump-baselessly-attacks-california-election-in-a-midterm-preview/">Arizona Mirror (June 11)</a> · <a href="https://www.washingtonpost.com/national-security/2026/06/11/trump-picks-jay-clayton-manhattan-us-attorney-be-director-national-intelligence/">Washington Post</a> · <a href="https://www.cnn.com/2026/06/10/politics/trump-la-election-fraud-justice-department">CNN (June 10)</a> · <a href="https://www.democracydocket.com/news-alerts/trump-jay-clayton-national-intelligence-director-election-conspiracy-theories/">Democracy Docket</a> · <a href="https://www.washingtonexaminer.com/news/senate/4615413/bill-pulte-acting-dni-no-fisa-deal/">Washington Examiner (June 19, Pulte Acting DNI)</a></p>
+      </article>
+
+    </div>
+    <div class="empty-state" id="emptyState">No items match the current filters. Try resetting or broadening the criteria.</div>
+  </section>
+
+  <!-- BRIGHT SPOTS -->
+  <section class="bright-spots">
+    <p class="eyebrow">Holding the line</p>
+    <h2>Bright spots</h2>
+    <div class="gold-rule"></div>
+    <ul>
+      <li><strong>Bipartisan FY2027 budget signed into law, averting a shutdown before the primary.</strong> Gov. Hobbs signed the ~$18.3B bipartisan budget on June 13, ending the standoff that had risked a July 1 government shutdown colliding with early voting. (Caveat: whether it cures the county HAVA appropriation lapsing June 30 is unconfirmed — see the Election Funding item.) (<a href="https://azcapitoltimes.com/news/2026/06/13/hobbs-signs-18-3-billion-bipartisan-budget/">AZ Capitol Times</a> · <a href="https://azmirror.com/briefs/hobbs-signs-18-3b-arizona-budget-calling-trump-conforming-tax-cuts-a-historic-win/">Arizona Mirror</a>)</li>
+      <li><strong>DHS retreats on mail-voter data harvesting.</strong> A June 8 DOJ filing disclosed DHS dropped both the SAVE database and a planned voter-roll upload portal from mail-ballot EO implementation, and walked back direct USPS data integration — though experts caution the retreat may be litigation strategy, and federal citizenship lists are still slated for June 30. (<a href="https://azmirror.com/2026/06/10/repub/homeland-security-retreats-on-plan-to-harvest-data-on-millions-of-mail-in-voters-under-trump-executive-order/">Arizona Mirror</a>)</li>
+      <li><strong>SAVE Act blocked in the Senate.</strong> On June 4, Senators Collins, Murkowski, McConnell, and Tillis joined all Democrats to defeat the documentary proof-of-citizenship mandate; Leader Thune signaled it won't return this session — and as of June 19 Thune is rebuffing Trump's new demand to weld SAVE to FISA §702 renewal, calling it "unrealistic" (see Legislative pillar above). (<a href="https://www.npr.org/2026/06/04/nx-s1-5751145/save-act-senate-vote-trump">NPR</a> · <a href="https://www.npr.org/2026/06/17/nx-s1-5859298/jay-clayton-confirmation-hearing-director-of-national-intelligence">NPR (June 17)</a>)</li>
+      <li><strong>Bill introduced to bar federal interference at the polls.</strong> A bipartisan-targeted "Protect Our Polls Act" (led by Sen. Elissa Slotkin, with Arizona Sens. Mark Kelly and Ruben Gallego among co-sponsors) was introduced June 18 to require congressional approval before deploying uniformed military or federal law enforcement to polling places and to cut funding for any federal seizure of ballots or voting machines — a direct counter to the polling-site enforcement proposals tracked above. Passage prospects are uncertain in the current Congress. (<a href="https://www.kelly.senate.gov/newsroom/press-releases/kelly-colleagues-introduce-bill-to-stop-trump-from-using-military-or-federal-law-enforcement-to-interfere-with-elections/">Sen. Kelly release</a> · <a href="https://ktar.com/arizona-politics-news/election/gallego-elections/5881148/">KTAR (June 18)</a>)</li>
+      <li><strong>DOJ voter-roll lawsuit dismissed with prejudice.</strong> On April 28, U.S. District Judge Susan Brnovich — a Trump appointee — dismissed DOJ's suit seeking Arizona's full unredacted voter file. (<a href="https://www.votebeat.org/arizona/2026/04/28/department-justice-trump-adrian-fontes-unredacted-voter-rolls-lawsuit-dismissed-brnovich-ruling/">Votebeat</a>)</li>
+      <li><strong>Mass-purge suit tossed on appeal.</strong> The 9th Circuit affirmed dismissal of the suit claiming up to 1.27 million ineligible Arizona voters, finding "no proof that there are ineligible people on the rolls." (<a href="https://azmirror.com/briefs/federal-appeals-court-tosses-arizona-gop-lawsuit-seeking-to-purge-1-27-million-voters/">Arizona Mirror</a>)</li>
+      <li><strong>Bipartisan primary date change in effect.</strong> The primary moved from August 4 to July 21, 2026, giving officials time to meet military and overseas ballot deadlines even after a statewide recount. (<a href="https://www.votebeat.org/arizona/2026/02/04/2026-primary-election-date-move-earlier-legislature-bill-kolodin-hobbs/">Votebeat</a>)</li>
+      <li><strong>EPM creation process upheld.</strong> The Arizona Supreme Court and Court of Appeals fully rejected the GOP challenge to how the Elections Procedures Manual is made (Oct.–Dec. 2025). (<a href="https://azmirror.com/2025/12/10/appeals-court-deals-final-blow-to-gops-elections-rulebook-challenge/">Arizona Mirror</a>)</li>
+    </ul>
+  </section>
+
+  <footer class="footer">
+    <p class="meta-line">Compiled June 22, 2026 by Leadership Now Arizona. Key dates: voter-registration deadline June 22 (today) · early voting begins June 24 · statewide primary July 21, 2026 · general election November 3, 2026 (Governor, Secretary of State, and Attorney General all on the ballot). This edition's headline change: the U.S. Supreme Court took <em>no action</em> on the consolidated Arizona proof-of-citizenship petitions (<em>RNC v. Mi Familia Vota</em>) at its June 22 order list — relisting/holding the case, so there will be no cert decision before the July 21 primary. Otherwise a quiet Friday–Monday window (Congress in recess, courts largely idle): FHFA Director Bill Pulte formally became Acting DNI (June 19); the Maricopa Recorder–Board dispute reached its court-ordered June 22 mediation date under the appellate stay; and the fake-electors grand-jury deadline (June 19) passed with the dismissal's with/without-prejudice question still unresolved.</p>
+    <p class="meta-line">Sources reviewed: 55+ published reports across primary government records, court filings, AZ news outlets, election-law publications, and democracy trackers, including the U.S. Supreme Court's June 22 order list. Next update: June 24, 2026.</p>
+    <p class="method-note">This dashboard is produced by a cross-partisan group of election experts and former officials. Items are flagged Critical, Elevated, or Emerging based on imminence and impact. Every named person, date, claim, and statistic is sourced. Items whose current procedural status could not be confirmed as of compilation are noted in the text ("status unconfirmed") — verify before quoting in public-facing material.</p>
+  </footer>
+
+</div>
+
+<script>
+(function() {
+  // ----- Filter state -----
+  const state = { pillar: 'all', severity: 'all', sort: 'severity' };
+
+  // ----- Render severity chart -----
+  function getCounts() {
+    const items = document.querySelectorAll('.item');
+    const counts = { critical: 0, elevated: 0, emerging: 0 };
+    items.forEach(i => counts[i.dataset.severity]++);
+    return counts;
+  }
+
+  const counts = getCounts();
+  const donutEl = document.getElementById('severityDonut');
+  const colors = {
+    critical: getComputedStyle(document.documentElement).getPropertyValue('--crit-red').trim(),
+    elevated: getComputedStyle(document.documentElement).getPropertyValue('--elev-amber').trim(),
+    emerging: getComputedStyle(document.documentElement).getPropertyValue('--emrg-slate').trim()
+  };
+
+  if (donutEl) {
+    // Pure-SVG donut: no external libraries, renders offline and in any browser.
+    const total = counts.critical + counts.elevated + counts.emerging;
+    const segs = [['critical', colors.critical], ['elevated', colors.elevated], ['emerging', colors.emerging]];
+    let offset = 25; // start at 12 o'clock (circumference normalized to 100)
+    let circles = '';
+    segs.forEach(([key, color]) => {
+      const pct = total ? (counts[key] / total) * 100 : 0;
+      if (pct > 0) {
+        circles += '<circle cx="21" cy="21" r="15.9155" fill="none" stroke="' + color + '" stroke-width="6.5" stroke-dasharray="' + pct + ' ' + (100 - pct) + '" stroke-dashoffset="' + offset + '"></circle>';
+      }
+      offset -= pct;
+    });
+    donutEl.innerHTML =
+      '<svg viewBox="0 0 42 42" xmlns="http://www.w3.org/2000/svg">' + circles +
+      '<text x="21" y="21.5" text-anchor="middle" font-size="9" font-weight="700" font-family="inherit" fill="' + getComputedStyle(document.documentElement).getPropertyValue('--lnp-navy').trim() + '">' + total + '</text>' +
+      '<text x="21" y="26.5" text-anchor="middle" font-size="2.8" letter-spacing="0.4" font-family="inherit" fill="' + getComputedStyle(document.documentElement).getPropertyValue('--lnp-muted-gray').trim() + '">TRACKED</text>' +
+      '</svg>';
+
+    document.getElementById('severityLegend').innerHTML = `
+      <div class="row"><span><span class="swatch" style="background:${colors.critical}"></span>Critical</span><span><strong>${counts.critical}</strong></span></div>
+      <div class="row"><span><span class="swatch" style="background:${colors.elevated}"></span>Elevated</span><span><strong>${counts.elevated}</strong></span></div>
+      <div class="row"><span><span class="swatch" style="background:${colors.emerging}"></span>Emerging</span><span><strong>${counts.emerging}</strong></span></div>
+      <div class="row" style="border-bottom:none; font-weight:600; color:var(--lnp-navy);"><span>Total tracked</span><span><strong>${total}</strong></span></div>
+    `;
+  }
+
+  // ----- Filter / sort logic -----
+  function applyFilters() {
+    const items = Array.from(document.querySelectorAll('.item'));
+    let shown = 0;
+
+    items.forEach(item => {
+      const pillarMatch = state.pillar === 'all' || item.dataset.pillar === state.pillar;
+      let sevMatch = true;
+      if (state.severity === 'critical') sevMatch = item.dataset.severity === 'critical';
+      if (state.severity === 'elevated') sevMatch = item.dataset.severity === 'critical' || item.dataset.severity === 'elevated';
+
+      if (pillarMatch && sevMatch) { item.classList.remove('hidden'); shown++; }
+      else item.classList.add('hidden');
+    });
+
+    // Sort
+    const list = document.getElementById('itemsList');
+    const sorted = items.sort((a, b) => {
+      if (state.sort === 'severity') {
+        const r = parseInt(b.dataset.sevRank) - parseInt(a.dataset.sevRank);
+        return r !== 0 ? r : new Date(b.dataset.date) - new Date(a.dataset.date);
+      }
+      if (state.sort === 'date') return new Date(b.dataset.date) - new Date(a.dataset.date);
+      if (state.sort === 'pillar') return a.dataset.pillar.localeCompare(b.dataset.pillar);
+      return 0;
+    });
+    sorted.forEach(item => list.appendChild(item));
+
+    // Count + empty state
+    const total = items.length;
+    const count = document.getElementById('resultsCount');
+    count.textContent = shown === total ? `Showing all ${total} items` : `Showing ${shown} of ${total} items`;
+    document.getElementById('emptyState').classList.toggle('show', shown === 0);
+  }
+
+  // ----- Wire up controls -----
+  document.querySelectorAll('[data-filter-pillar]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-filter-pillar]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.pillar = btn.dataset.filterPillar;
+      applyFilters();
+    });
+  });
+
+  document.querySelectorAll('[data-filter-sev]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-filter-sev]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.severity = btn.dataset.filterSev;
+      applyFilters();
+    });
+  });
+
+  document.getElementById('sortSelect').addEventListener('change', e => {
+    state.sort = e.target.value;
+    applyFilters();
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    state.pillar = 'all'; state.severity = 'all'; state.sort = 'severity';
+    document.querySelectorAll('[data-filter-pillar]').forEach(b => b.classList.toggle('active', b.dataset.filterPillar === 'all'));
+    document.querySelectorAll('[data-filter-sev]').forEach(b => b.classList.toggle('active', b.dataset.filterSev === 'all'));
+    document.getElementById('sortSelect').value = 'severity';
+    applyFilters();
+  });
+
+  applyFilters();
+})();
+</script>
+
+</body></html>
